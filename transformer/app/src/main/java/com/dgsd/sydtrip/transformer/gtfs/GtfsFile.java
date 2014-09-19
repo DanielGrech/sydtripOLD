@@ -10,6 +10,8 @@ import com.dgsd.sydtrip.transformer.gtfs.model.source.GtfsStop;
 import com.dgsd.sydtrip.transformer.gtfs.model.source.GtfsStopTime;
 import com.dgsd.sydtrip.transformer.gtfs.model.source.GtfsTrip;
 
+import java.util.Arrays;
+
 public enum GtfsFile {
 
     AGENCY("agency.txt", GtfsAgency.class),
@@ -42,5 +44,9 @@ public enum GtfsFile {
 
     public Class<? extends BaseGtfsModel> getModelClass() {
         return modelClass;
+    }
+
+    public boolean enabled() {
+        return !Arrays.asList(SHAPES, AGENCY).contains(this);
     }
 }

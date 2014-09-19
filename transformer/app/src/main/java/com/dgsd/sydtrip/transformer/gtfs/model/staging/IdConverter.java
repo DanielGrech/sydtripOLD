@@ -49,11 +49,7 @@ class IdConverter {
 
     public static int convertRouteId(String routeId) {
         ensureInstance();
-        int id = instance.routeIdCache.convertId(routeId);
-        if (id == 2) {
-            ensureInstance();
-        }
-        return id;
+        return instance.routeIdCache.convertId(routeId);
     }
 
     public static int convertShapeId(String shapeId) {

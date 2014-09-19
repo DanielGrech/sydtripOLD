@@ -35,6 +35,13 @@ public abstract class BaseStagingModel<T extends BaseGtfsModel> {
 
     protected static int parseTimeToSecondsOfDay(String input) {
         try {
+            if (input != null && input.length() > 2) {
+                final int hour = safeParseInt(input.substring(0, 2), -1);
+                if (hour > LocalTime.MAX.getHour()) {
+                    final int newHour = hour - LocalTime.MAX.getHour() - 1;
+                    input = String.format("%02d", newHour) + input.substring(2);
+                }
+            }
             return LocalTime.parse(input, DateTimeFormatter.ISO_LOCAL_TIME).toSecondOfDay();
         } catch (Exception e) {
             return -1;

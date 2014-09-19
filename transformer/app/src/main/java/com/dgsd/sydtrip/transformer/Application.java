@@ -24,12 +24,15 @@ import com.dgsd.sydtrip.transformer.gtfs.model.target.Trip;
 import com.dgsd.sydtrip.transformer.gtfs.parser.IParser;
 import com.dgsd.sydtrip.transformer.gtfs.parser.ParserFactory;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -40,6 +43,7 @@ import java.util.logging.Logger;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
 
 public class Application {
 
@@ -66,6 +70,12 @@ public class Application {
         } else if (folder.listFiles().length == 0) {
             fatalError(String.format("%s is empty!", gtfsFolder));
         } else {
+            if (StringUtils.isEmpty(databaseFilePath)) {
+                databaseFilePath = "";
+            } else if (!databaseFilePath.endsWith("/")) {
+                databaseFilePath += "/";
+            }
+
             return new Application(folder, databaseFilePath);
         }
 
@@ -84,7 +94,7 @@ public class Application {
                 .parallelStream()
                 .filter(file -> (file.exists() && file.isFile()))
                 .map(file -> Pair.of(file, GtfsFile.named(file.getName())))
-                .filter(pair -> (pair.getRight() != null))
+                .filter(pair -> (pair.getRight() != null && pair.getRight().enabled()))
                 .map(pair -> processGtfsFile(pair))
                 .collect(toMap(GtfsFileWithStagingModels::getFile, f -> f.models));
         LOG.info("Finished staging transform");
@@ -137,12 +147,51 @@ public class Application {
                     return new Trip(stagingTrip, stopTimes, route, calInfo);
                 })
                 .collect(toList());
+
+        final Map<Integer, List<Trip>> typeToTripMap = trips.parallelStream().collect(toSet())
+                .parallelStream()
+                .filter(trip -> Objects.nonNull(trip.getRoute()))
+                .collect(groupingBy(trip -> trip.getRoute().getRouteType()));
+
         LOG.info("Converted trips..");
 
-        try (final Database database = new Database(databaseFilePath)) {
-            database.create();
-            database.persist(trips, stops);
-        }
+        typeToTripMap.keySet().forEach(type -> {
+            final String dbName;
+            switch (type) {
+                case Route.TYPE_BUS:
+                    dbName = "bus.db";
+                    break;
+                case Route.TYPE_RAIL:
+                    dbName = "rail.db";
+                    break;
+                case Route.TYPE_FERRY:
+                    dbName = "ferry.db";
+                    break;
+                case Route.TYPE_TRAM:
+                    dbName = "lightrail.db";
+                    break;
+                default:
+                    return;
+            }
+
+            final List<Trip> tripsForType = typeToTripMap.get(type);
+
+            final Set<Integer> stopIds = new HashSet<>();
+            tripsForType.forEach(trip -> {
+                trip.getStops().forEach(stopTime -> {
+                    stopIds.add(stopTime.getStopId());
+                });
+            });
+
+            final List<Stop> stopsForType = stops.parallelStream()
+                    .filter(stop -> stopIds.contains(stop.getId()))
+                    .collect(toList());
+
+            try (final Database database = new Database(databaseFilePath + dbName)) {
+                database.create();
+                database.persist(tripsForType, stopsForType);
+            }
+        });
     }
 
     private GtfsFileWithStagingModels processGtfsFile(Pair<File, GtfsFile> fileAndGtfsFile) {

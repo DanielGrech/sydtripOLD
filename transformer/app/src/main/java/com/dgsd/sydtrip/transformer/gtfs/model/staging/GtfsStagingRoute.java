@@ -27,7 +27,7 @@ public class GtfsStagingRoute extends BaseStagingModel<GtfsRoute> {
         longName = gtfsObject.getLongName();
         desc = gtfsObject.getDesc();
         routeType = safeParseInt(gtfsObject.getType(), -1);
-        color = safeParseInt(gtfsObject.getType(), 16, 0xFFFFFF);
+        color = safeParseInt(gtfsObject.getColor(), 16, 0xFFFFFF);
     }
 
     public int getId() {

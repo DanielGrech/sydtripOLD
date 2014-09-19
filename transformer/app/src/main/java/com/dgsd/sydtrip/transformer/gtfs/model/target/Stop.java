@@ -2,6 +2,8 @@ package com.dgsd.sydtrip.transformer.gtfs.model.target;
 
 import com.dgsd.sydtrip.transformer.gtfs.model.staging.GtfsStagingStop;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class Stop {
 
     private final int id;
@@ -25,7 +27,7 @@ public class Stop {
     public Stop(GtfsStagingStop stop) {
         id = stop.getId();
         code = stop.getCode();
-        name = stop.getName();
+        name = StringUtils.isEmpty(stop.getName()) ? null : stop.getName().trim();
         lat = stop.getLat();
         lng = stop.getLng();
         type = stop.getType();

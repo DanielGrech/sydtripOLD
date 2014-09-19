@@ -1,6 +1,6 @@
 CREATE TABLE trips (
     _id INTEGER PRIMARY KEY,
-    headSign TEXT,
+    headSign INTEGER,
     direction INTEGER,
     blockId TEXT,
     wheelchairAccess INTEGER,

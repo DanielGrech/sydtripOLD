@@ -2,6 +2,8 @@ package com.dgsd.sydtrip.transformer.gtfs.model.target;
 
 import com.dgsd.sydtrip.transformer.gtfs.model.staging.GtfsStagingAgency;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class Agency {
 
     private final int id;
@@ -10,7 +12,7 @@ public class Agency {
 
     public Agency(GtfsStagingAgency agency) {
         this.id = agency.getId();
-        this.name = agency.getName();
+        this.name = StringUtils.isEmpty(agency.getName()) ? null : agency.getName();
     }
 
     public int getId() {

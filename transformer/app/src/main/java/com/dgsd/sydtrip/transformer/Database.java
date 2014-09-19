@@ -4,9 +4,11 @@ import com.dgsd.sydtrip.transformer.exception.DatabaseCreationException;
 import com.dgsd.sydtrip.transformer.exception.DatabaseOperationException;
 import com.dgsd.sydtrip.transformer.gtfs.model.target.Route;
 import com.dgsd.sydtrip.transformer.gtfs.model.target.Stop;
+import com.dgsd.sydtrip.transformer.gtfs.model.target.StopTime;
 import com.dgsd.sydtrip.transformer.gtfs.model.target.Trip;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,8 +18,10 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.ListIterator;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 public class Database implements AutoCloseable {
@@ -29,11 +33,24 @@ public class Database implements AutoCloseable {
     private static final String TRIP_INSERT_TEMPLATE
             = "INSERT OR REPLACE INTO trips VALUES(?, ?, ?, ?, ?, ?)";
     private static final String ROUTE_INSERT_TEMPLATE
-            = "INSERT OR REPLACE INTO routes VALUES(?, ?, ?, ?, ?, ?)";
+            = "INSERT OR REPLACE INTO routes VALUES(?, ?, ?, ?, ?)";
+    private static final String STOP_TIME_INSERT_TEMPLATE
+            = "INSERT OR REPLACE INTO stop_times VALUES(?, ?, ?)";
+    private static final String DYNAMIC_TEXT_TEMPLATE
+            = "INSERT OR REPLACE INTO dynamic_text VALUES(?, ?)";
 
     private final Connection connection;
 
+    private final String fileName;
+
+    private final Map<String, Integer> dynamicTextCache;
+
+    private final AtomicInteger dynamicTextGenerator;
+
     public Database(String fileName) {
+        this.fileName = fileName;
+        this.dynamicTextCache = new LinkedHashMap<>();
+        this.dynamicTextGenerator = new AtomicInteger(1);
         try {
             Class.forName("org.sqlite.JDBC");
             connection = DriverManager.getConnection("jdbc:sqlite:" + fileName);
@@ -45,6 +62,11 @@ public class Database implements AutoCloseable {
 
     public void create() {
         try (final Statement statement = connection.createStatement()) {
+
+            LOG.info(String.format("[Creating %s]", fileName));
+
+            LOG.info("Creating dynamic text table");
+            statement.execute(loadResource("sql/table_dynamic_text.sql"));
 
             LOG.info("Creating stops table");
             statement.execute(loadResource("sql/table_stops.sql"));
@@ -77,44 +99,74 @@ public class Database implements AutoCloseable {
         try {
             persistStops(stops);
             persistTrips(trips);
+            persistDynamicText();
             connection.commit();
         } catch (SQLException e) {
             throw new DatabaseOperationException(e);
         }
     }
 
+    private void persistDynamicText() throws SQLException {
+        try (final PreparedStatement statement
+                     = connection.prepareStatement(DYNAMIC_TEXT_TEMPLATE)) {
+            for (Map.Entry<String, Integer> entry : dynamicTextCache.entrySet()) {
+                setInt(statement, 1, entry.getValue());
+                statement.setString(2, entry.getKey());
+                statement.addBatch();
+            }
+
+            statement.executeBatch();
+        }
+    }
+
     private void persistTrips(List<Trip> trips) throws SQLException {
         try (final PreparedStatement tripStatement = connection.prepareStatement(TRIP_INSERT_TEMPLATE)) {
             try (final PreparedStatement routeStatement = connection.prepareStatement(ROUTE_INSERT_TEMPLATE)) {
-                for (Trip trip : trips) {
-                    int tripIdx = 1;
-                    setInt(tripStatement, tripIdx++, trip.getId());
-                    tripStatement.setString(tripIdx++, trip.getHeadSign());
-                    setInt(tripStatement, tripIdx++, trip.getDirection());
-                    tripStatement.setString(tripIdx++, trip.getBlockId());
-                    setInt(tripStatement, tripIdx++, trip.isWheelchairAccessible() ? 1 : 0);
+                try (final PreparedStatement stopTimeStatement
+                             = connection.prepareStatement(STOP_TIME_INSERT_TEMPLATE)) {
+                    for (Trip trip : trips) {
+                        int tripIdx = 1;
+                        setInt(tripStatement, tripIdx++, trip.getId());
+                        setInt(tripStatement, tripIdx++, getDynamicStringId(trip.getHeadSign()));
+                        setInt(tripStatement, tripIdx++, trip.getDirection());
+                        tripStatement.setString(tripIdx++, trip.getBlockId());
+                        setInt(tripStatement, tripIdx++, trip.isWheelchairAccessible() ? 1 : 0);
 
-                    final Route route = trip.getRoute();
-                    if (route == null) {
-                        setInt(tripStatement, tripIdx++, 0);
-                    } else {
-                        setInt(tripStatement, tripIdx++, route.getId());
+                        final Route route = trip.getRoute();
+                        if (route == null) {
+                            setInt(tripStatement, tripIdx++, 0);
+                        } else {
+                            setInt(tripStatement, tripIdx++, route.getId());
 
-                        int routeIdx = 1;
-                        setInt(routeStatement, routeIdx++, route.getId());
-                        setInt(routeStatement, routeIdx++, route.getAgencyId());
-                        routeStatement.setString(routeIdx++, route.getShortName());
-                        routeStatement.setString(routeIdx++, route.getLongName());
-                        setInt(routeStatement, routeIdx++, route.getRouteType());
-                        setInt(routeStatement, routeIdx++, route.getColor());
-                        routeStatement.addBatch();
+                            int routeIdx = 1;
+                            setInt(routeStatement, routeIdx++, route.getId());
+                            setInt(routeStatement, routeIdx++, route.getAgencyId());
+                            setInt(routeStatement, routeIdx++,
+                                    getDynamicStringId(route.getShortName()));
+                            setInt(routeStatement, routeIdx++,
+                                    getDynamicStringId(route.getLongName()));
+                            setInt(routeStatement, routeIdx++, route.getColor());
+                            routeStatement.addBatch();
+                        }
+
+                        final List<StopTime> stopTimes = trip.getStops();
+                        if (stopTimes != null) {
+                            for (StopTime stopTime : stopTimes) {
+                                int stopTimeIdx = 1;
+                                setInt(stopTimeStatement, stopTimeIdx++, trip.getId());
+                                setInt(stopTimeStatement, stopTimeIdx++, stopTime.getStopId());
+                                setInt(stopTimeStatement, stopTimeIdx++, stopTime.getTime());
+                                stopTimeStatement.addBatch();
+                            }
+                        }
+
+                        tripStatement.addBatch();
                     }
 
-                    tripStatement.addBatch();
+                    stopTimeStatement.executeBatch();
+                    routeStatement.executeBatch();
+                    tripStatement.executeBatch();
                 }
-
-                routeStatement.executeBatch();
-                tripStatement.executeBatch();
             }
         }
     }
@@ -126,7 +178,7 @@ public class Database implements AutoCloseable {
                 int idx = 1;
                 setInt(statement, idx++, stop.getId());
                 statement.setString(idx++, stop.getCode());
-                statement.setString(idx++, stop.getName());
+                setInt(statement, idx++, getDynamicStringId(stop.getName()));
                 statement.setFloat(idx++, stop.getLat());
                 statement.setFloat(idx++, stop.getLng());
                 setInt(statement, idx++, stop.getType());
@@ -140,6 +192,21 @@ public class Database implements AutoCloseable {
         LOG.info("Finished persisting stops...");
     }
 
+    private int getDynamicStringId(String text) {
+        if (StringUtils.isEmpty(text)) {
+            return 0;
+        }
+
+        final Integer id = dynamicTextCache.get(text);
+        if (id == null) {
+            final int retval = dynamicTextGenerator.incrementAndGet();
+            dynamicTextCache.put(text, retval);
+            return retval;
+        } else {
+            return id;
+        }
+    }
+
     private static String loadResource(final String path) {
         try (InputStream stream
                      = Thread.currentThread().getContextClassLoader().getResourceAsStream(path)) {
@@ -150,7 +217,7 @@ public class Database implements AutoCloseable {
     }
 
     private static void setInt(PreparedStatement pStatement, int pos, int value) throws SQLException {
-        if(value == 0) {
+        if (value == 0) {
             pStatement.setNull(pos, Types.INTEGER);
         } else {
             pStatement.setInt(pos, value);
