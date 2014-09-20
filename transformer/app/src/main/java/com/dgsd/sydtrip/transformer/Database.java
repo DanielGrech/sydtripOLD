@@ -9,12 +9,19 @@ import com.dgsd.sydtrip.transformer.gtfs.model.target.Trip;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.tukaani.xz.LZMA2Options;
+import org.tukaani.xz.XZOutputStream;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
@@ -83,6 +90,29 @@ public class Database implements AutoCloseable {
             connection.commit();
         } catch (SQLException e) {
             throw new DatabaseOperationException(e);
+        }
+    }
+
+    public void compressTo(String outputFile) {
+        try {
+            final Process process = new ProcessBuilder("sqlite3", fileName, ".dump").start();
+            final InputStream isr = new BufferedInputStream(process.getInputStream());
+
+            LZMA2Options options = new LZMA2Options();
+            options.setPreset(9);
+
+            try (final XZOutputStream out
+                         = new XZOutputStream(new FileOutputStream(outputFile), options)) {
+                final byte[] buf = new byte[8192];
+                int size;
+                while ((size = isr.read(buf)) != -1) {
+                    out.write(buf, 0, size);
+                }
+
+                out.finish();
+            }
+        } catch (IOException ex) {
+            throw new DatabaseOperationException(ex);
         }
     }
 

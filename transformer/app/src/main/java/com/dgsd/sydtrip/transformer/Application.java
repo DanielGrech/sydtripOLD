@@ -23,6 +23,7 @@ import com.dgsd.sydtrip.transformer.gtfs.model.target.StopTime;
 import com.dgsd.sydtrip.transformer.gtfs.model.target.Trip;
 import com.dgsd.sydtrip.transformer.gtfs.parser.IParser;
 import com.dgsd.sydtrip.transformer.gtfs.parser.ParserFactory;
+import com.dgsd.sydtrip.transformer.util.CompressionUtils;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -187,9 +188,14 @@ public class Application {
                     .filter(stop -> stopIds.contains(stop.getId()))
                     .collect(toList());
 
-            try (final Database database = new Database(databaseFilePath + dbName)) {
+            final String dbFile = databaseFilePath + dbName;
+            try (final Database database = new Database(dbFile)) {
                 database.create();
                 database.persist(tripsForType, stopsForType);
+
+                LOG.info("Compressing " + dbFile);
+                CompressionUtils.compress(dbFile, dbFile.replace(".db", ".xz"));
+                LOG.info("Compressed to " + dbFile.replace(".db", ".xz"));
             }
         });
     }
