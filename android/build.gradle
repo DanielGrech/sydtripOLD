@@ -15,7 +15,7 @@ task wrapper(type: Wrapper) {
 subprojects {
     ext {
         androidCompileSdkVersion = 'android-L'
-        androidMinSdkVersion = 16
+        androidMinSdkVersion = 'android-L'
         androidTargetSdkVersion = 'android-L'
         androidBuildToolsVersion = '20.0.0'
         androidGradlePluginVersion = '0.13.0'
