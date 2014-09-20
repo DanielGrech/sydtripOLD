@@ -53,10 +53,14 @@ public abstract class BaseStagingModel<T extends BaseGtfsModel> {
     }
 
     protected static int safeParseInt(String input, int base, int defaultValue) {
-        if (input == null || !StringUtils.isNumeric(input)) {
+        if (input == null) {
             return defaultValue;
         } else {
-            return Integer.parseInt(input, base);
+            try {
+                return Integer.parseInt(input, base);
+            } catch (Exception e) {
+                return defaultValue;
+            }
         }
     }
 
