@@ -2,11 +2,20 @@
 apply plugin:'application'
 
 mainClassName = "com.dgsd.sydtrip.transformer.Application"
+applicationDefaultJvmArgs = [
+        '-Xmx5148m'
+]
 
 run {
     systemProperty "java.util.logging.SimpleFormatter.format", '%1$tH:%1$tM:%1$tS %4$-6s %2$s %5$s%6$s%n'
     args '/Users/daniel/Desktop/gtfs_sydney', '/Users/daniel/Desktop/'
-    jvmArgs '-Xmx5148m'
+    jvmArgs applicationDefaultJvmArgs
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': mainClassName
+    }
 }
 
 dependencies {
