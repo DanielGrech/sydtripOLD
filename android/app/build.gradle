@@ -1,0 +1,95 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:' + androidGradlePluginVersion
+    }
+}
+
+apply plugin: 'com.android.application'
+
+repositories {
+    mavenCentral()
+}
+
+def buildTime() {
+    def df = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm'Z'")
+    df.setTimeZone(TimeZone.getTimeZone("UTC"))
+    return df.format(new Date())
+}
+
+def gitSha() {
+    return 'git rev-parse --short HEAD'.execute().text.trim()
+}
+
+def whoami() {
+    def whoami = 'whoami'.execute().text
+    return whoami == null ? '' : whoami.trim();
+}
+
+def appVersionName = "${appVersionMajor}.${appVersionMinor}.${appVersionPatch}"
+def appVersionCode = appVersionMajor * 10000 + appVersionMinor * 1000 + appVersionPatch * 100
+
+def appPackageName = "com.sydtrip.android.sydtrip"
+
+android {
+    compileSdkVersion androidCompileSdkVersion
+    buildToolsVersion androidBuildToolsVersion
+
+    packagingOptions {
+        exclude 'META-INF/services/javax.annotation.processing.Processor'
+    }
+
+    defaultConfig {
+        minSdkVersion androidMinSdkVersion
+        targetSdkVersion androidTargetSdkVersion
+        applicationId appPackageName
+        versionCode appVersionCode
+        versionName appVersionName
+
+        buildConfigField "boolean", "IS_RELEASE", "BUILD_TYPE.equals(\"release\")"
+        buildConfigField "String", "CONTENT_AUTHORITY", "\"${appPackageName}.\" + BUILD_TYPE"
+        buildConfigField "int", "DEFAULT_JOB_RETRY_LIMIT", "${defaultJobRetryLimit}"
+        buildConfigField "String", "GIT_SHA", "\"${gitSha()}\""
+        buildConfigField "String", "BUILD_TIME", "\"${buildTime()}\""
+        buildConfigField "String", "BUILDER", "\"${whoami()}\""
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
+    }
+
+    lintOptions {
+        abortOnError false
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix '.debug'
+            versionNameSuffix '-debug'
+        }
+
+        release {
+            applicationIdSuffix '.release'
+            versionNameSuffix '-release'
+        }
+    }
+
+}
+
+dependencies {
+    compile 'com.android.support:support-v13:20.+'
+    compile 'com.google.android.gms:play-services:4.+'
+    compile 'com.jakewharton.timber:timber:2.0.+'
+    provided 'com.squareup.dagger:dagger-compiler:1.2.+'
+    compile 'com.squareup.dagger:dagger:1.2.+'
+    compile 'com.squareup:otto:1.3.+'
+    compile 'com.jakewharton:butterknife:5.0.+'
+    compile 'com.google.code.gson:gson:2.2.+'
+    compile 'com.path:android-priority-jobqueue:1.1.+'
+    compile fileTree(dir: '../libs', include: '*.jar')
+
+    androidTestCompile 'org.easytesting:fest-assert-core:2.0M10'
+}

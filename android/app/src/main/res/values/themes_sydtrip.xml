@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Generated with http://android-holo-colors.com -->
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <style name="sydtrip" parent="@style/_sydtrip"/>
+
+  <style name="_sydtrip" parent="android:Theme.Holo.Light.DarkActionBar">
+
+    <item name="android:editTextBackground">@drawable/sydtrip_edit_text_holo_light</item>
+
+    <item name="android:textColorHighlight">#99455A64</item>
+    <item name="android:textSelectHandleLeft">@drawable/sydtrip_text_select_handle_left</item>
+    <item name="android:textSelectHandleRight">@drawable/sydtrip_text_select_handle_right</item>
+    <item name="android:textSelectHandle">@drawable/sydtrip_text_select_handle_middle</item>
+
+    <item name="android:autoCompleteTextViewStyle">@style/AutoCompleteTextViewsydtrip</item>
+
+    <item name="android:listChoiceIndicatorMultiple">@drawable/sydtrip_btn_check_holo_light</item>
+
+    <item name="android:listChoiceIndicatorSingle">@drawable/sydtrip_btn_radio_holo_light</item>
+
+    <item name="android:buttonStyle">@style/Buttonsydtrip</item>
+
+    <item name="android:imageButtonStyle">@style/ImageButtonsydtrip</item>
+
+    <item name="android:progressBarStyleHorizontal">@style/ProgressBarsydtrip</item>
+
+    <item name="android:listChoiceBackgroundIndicator">@drawable/sydtrip_list_selector_holo_light</item>
+
+    <item name="android:activatedBackgroundIndicator">@drawable/sydtrip_activated_background_holo_light</item>
+
+    <item name="android:fastScrollThumbDrawable">@drawable/sydtrip_fastscroll_thumb_holo</item>
+
+  </style>
+
+</resources>
