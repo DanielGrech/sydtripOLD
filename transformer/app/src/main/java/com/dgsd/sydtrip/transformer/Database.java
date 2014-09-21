@@ -2,6 +2,7 @@ package com.dgsd.sydtrip.transformer;
 
 import com.dgsd.sydtrip.transformer.exception.DatabaseCreationException;
 import com.dgsd.sydtrip.transformer.exception.DatabaseOperationException;
+import com.dgsd.sydtrip.transformer.gtfs.model.target.CalendarInformation;
 import com.dgsd.sydtrip.transformer.gtfs.model.target.Route;
 import com.dgsd.sydtrip.transformer.gtfs.model.target.Stop;
 import com.dgsd.sydtrip.transformer.gtfs.model.target.StopTime;
@@ -13,15 +14,12 @@ import org.tukaani.xz.LZMA2Options;
 import org.tukaani.xz.XZOutputStream;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
@@ -43,8 +41,12 @@ public class Database implements AutoCloseable {
             = "INSERT OR REPLACE INTO routes VALUES(?, ?, ?, ?, ?)";
     private static final String STOP_TIME_INSERT_TEMPLATE
             = "INSERT OR REPLACE INTO stop_times VALUES(?, ?, ?)";
-    private static final String DYNAMIC_TEXT_TEMPLATE
+    private static final String DYNAMIC_TEXT_INSERT_TEMPLATE
             = "INSERT OR REPLACE INTO dynamic_text VALUES(?, ?)";
+    private static final String CAL_INFO_INSERT_TEMPLATE
+            = "INSERT OR REPLACE INTO calendar_info VALUES(?, ?, ?, ?)";
+    private static final String CAL_INFO_EX_INSERT_TEMPLATE
+            = "INSERT OR REPLACE INTO calendar_info_ex VALUES(?, ?, ?)";
 
     private final Connection connection;
 
@@ -74,6 +76,12 @@ public class Database implements AutoCloseable {
 
             LOG.info("Creating dynamic text table");
             statement.execute(loadResource("sql/table_dynamic_text.sql"));
+
+            LOG.info("Creating calendar info table");
+            statement.execute(loadResource("sql/table_calendar_info.sql"));
+
+            LOG.info("Creating calendar info exceptions table");
+            statement.execute(loadResource("sql/table_calendar_info_ex.sql"));
 
             LOG.info("Creating stops table");
             statement.execute(loadResource("sql/table_stops.sql"));
@@ -138,7 +146,7 @@ public class Database implements AutoCloseable {
 
     private void persistDynamicText() throws SQLException {
         try (final PreparedStatement statement
-                     = connection.prepareStatement(DYNAMIC_TEXT_TEMPLATE)) {
+                     = connection.prepareStatement(DYNAMIC_TEXT_INSERT_TEMPLATE)) {
             for (Map.Entry<String, Integer> entry : dynamicTextCache.entrySet()) {
                 setInt(statement, 1, entry.getValue());
                 statement.setString(2, entry.getKey());
@@ -154,48 +162,84 @@ public class Database implements AutoCloseable {
             try (final PreparedStatement routeStatement = connection.prepareStatement(ROUTE_INSERT_TEMPLATE)) {
                 try (final PreparedStatement stopTimeStatement
                              = connection.prepareStatement(STOP_TIME_INSERT_TEMPLATE)) {
-                    for (Trip trip : trips) {
-                        int tripIdx = 1;
-                        setInt(tripStatement, tripIdx++, trip.getId());
-                        setInt(tripStatement, tripIdx++, getDynamicStringId(trip.getHeadSign()));
-                        setInt(tripStatement, tripIdx++, trip.getDirection());
-                        tripStatement.setString(tripIdx++, trip.getBlockId());
-                        setInt(tripStatement, tripIdx++, trip.isWheelchairAccessible() ? 1 : 0);
+                    try (final PreparedStatement calInfoStatement
+                                 = connection.prepareStatement(CAL_INFO_INSERT_TEMPLATE)) {
+                        try (final PreparedStatement calInfoExceptionStatement
+                                     = connection.prepareStatement(CAL_INFO_EX_INSERT_TEMPLATE)) {
+                            for (Trip trip : trips) {
+                                int tripIdx = 1;
+                                setInt(tripStatement, tripIdx++, trip.getId());
+                                setInt(tripStatement, tripIdx++, getDynamicStringId(trip.getHeadSign()));
+                                setInt(tripStatement, tripIdx++, trip.getDirection());
+                                tripStatement.setString(tripIdx++, trip.getBlockId());
+                                setInt(tripStatement, tripIdx++, trip.isWheelchairAccessible() ? 1 : 0);
 
-                        final Route route = trip.getRoute();
-                        if (route == null) {
-                            setInt(tripStatement, tripIdx++, 0);
-                        } else {
-                            setInt(tripStatement, tripIdx++, route.getId());
+                                final Route route = trip.getRoute();
+                                if (route == null) {
+                                    setInt(tripStatement, tripIdx++, 0);
+                                } else {
+                                    setInt(tripStatement, tripIdx++, route.getId());
 
-                            int routeIdx = 1;
-                            setInt(routeStatement, routeIdx++, route.getId());
-                            setInt(routeStatement, routeIdx++, route.getAgencyId());
-                            setInt(routeStatement, routeIdx++,
-                                    getDynamicStringId(route.getShortName()));
-                            setInt(routeStatement, routeIdx++,
-                                    getDynamicStringId(route.getLongName()));
-                            setInt(routeStatement, routeIdx++, route.getColor());
-                            routeStatement.addBatch();
-                        }
+                                    int routeIdx = 1;
+                                    setInt(routeStatement, routeIdx++, route.getId());
+                                    setInt(routeStatement, routeIdx++, route.getAgencyId());
+                                    setInt(routeStatement, routeIdx++,
+                                            getDynamicStringId(route.getShortName()));
+                                    setInt(routeStatement, routeIdx++,
+                                            getDynamicStringId(route.getLongName()));
+                                    setInt(routeStatement, routeIdx++, route.getColor());
+                                    routeStatement.addBatch();
+                                }
 
-                        final List<StopTime> stopTimes = trip.getStops();
-                        if (stopTimes != null) {
-                            for (StopTime stopTime : stopTimes) {
-                                int stopTimeIdx = 1;
-                                setInt(stopTimeStatement, stopTimeIdx++, trip.getId());
-                                setInt(stopTimeStatement, stopTimeIdx++, stopTime.getStopId());
-                                setInt(stopTimeStatement, stopTimeIdx++, stopTime.getTime());
-                                stopTimeStatement.addBatch();
+                                final List<StopTime> stopTimes = trip.getStops();
+                                if (stopTimes != null) {
+                                    for (StopTime stopTime : stopTimes) {
+                                        int stopTimeIdx = 1;
+                                        setInt(stopTimeStatement, stopTimeIdx++, trip.getId());
+                                        setInt(stopTimeStatement, stopTimeIdx++, stopTime.getStopId());
+                                        setInt(stopTimeStatement, stopTimeIdx++, stopTime.getTime());
+                                        stopTimeStatement.addBatch();
+                                    }
+                                }
+
+                                final CalendarInformation calInfo = trip.getCalendarInformation();
+                                if (calInfo != null) {
+                                    int calInfoIdx = 1;
+                                    setInt(calInfoStatement, calInfoIdx++, trip.getId());
+                                    setInt(calInfoStatement, calInfoIdx++, calInfo.getStartJulianDate());
+                                    setInt(calInfoStatement, calInfoIdx++, calInfo.getEndJulianDate());
+                                    setInt(calInfoStatement, calInfoIdx++, calInfo.getAvailabilityBitmask());
+
+                                    final Map<Integer, Integer> exceptions
+                                            = calInfo.getJulianDayToExceptionMap();
+                                    if (exceptions != null) {
+                                        for (Map.Entry<Integer, Integer> entry : exceptions.entrySet()) {
+                                            int calInfoExceptionIdx = 1;
+                                            setInt(calInfoExceptionStatement,
+                                                    calInfoExceptionIdx++, trip.getId());
+                                            setInt(calInfoExceptionStatement,
+                                                    calInfoExceptionIdx++, entry.getKey());
+                                            setInt(calInfoExceptionStatement,
+                                                    calInfoExceptionIdx++, entry.getValue());
+
+                                            calInfoExceptionStatement.addBatch();
+                                        }
+                                    }
+
+
+                                    calInfoStatement.addBatch();
+                                }
+
+                                tripStatement.addBatch();
                             }
+
+                            calInfoStatement.executeBatch();
+                            calInfoExceptionStatement.executeBatch();
+                            stopTimeStatement.executeBatch();
+                            routeStatement.executeBatch();
+                            tripStatement.executeBatch();
                         }
-
-                        tripStatement.addBatch();
                     }
-
-                    stopTimeStatement.executeBatch();
-                    routeStatement.executeBatch();
-                    tripStatement.executeBatch();
                 }
             }
         }
