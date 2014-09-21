@@ -184,6 +184,14 @@ public class Application {
                 });
             });
 
+            // Add parent stops
+            stopIds.addAll(stops.parallelStream()
+                    .filter(s -> s.getParentStopId() > 0)
+                    .filter(s -> stopIds.contains(s.getId()))
+                    .mapToInt(Stop::getParentStopId)
+                    .boxed()
+                    .collect(toList()));
+
             final List<Stop> stopsForType = stops.parallelStream()
                     .filter(stop -> stopIds.contains(stop.getId()))
                     .collect(toList());

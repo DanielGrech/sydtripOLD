@@ -34,7 +34,7 @@ public class Database implements AutoCloseable {
     private final static Logger LOG = Logger.getLogger(Database.class.getName());
 
     private static final String STOP_INSERT_TEMPLATE
-            = "INSERT OR REPLACE INTO stops VALUES(?, ?, ?, ?, ?, ?, ?)";
+            = "INSERT OR REPLACE INTO stops VALUES(?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String TRIP_INSERT_TEMPLATE
             = "INSERT OR REPLACE INTO trips VALUES(?, ?, ?, ?, ?, ?)";
     private static final String ROUTE_INSERT_TEMPLATE
@@ -256,6 +256,7 @@ public class Database implements AutoCloseable {
                 statement.setFloat(idx++, stop.getLat());
                 statement.setFloat(idx++, stop.getLng());
                 setInt(statement, idx++, stop.getType());
+                setInt(statement, idx++, stop.getParentStopId());
                 statement.setString(idx++, stop.getPlatformCode());
 
                 statement.addBatch();

@@ -5,5 +5,6 @@ CREATE TABLE stops (
     lat REAL,
     lng REAL,
     type INTEGER,
+    parentId INTEGER,
     platformCode TEXT
 )

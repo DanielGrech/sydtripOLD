@@ -1,5 +1,7 @@
 package com.dgsd.sydtrip.transformer.gtfs.model.staging;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -15,6 +17,10 @@ class IdConverter {
         }
 
         synchronized int convertId(String input) {
+            if (StringUtils.isEmpty(input)) {
+                return 0;
+            }
+
             final Integer convertedValue = cache.get(input);
             if (convertedValue == null) {
                 synchronized (idCounter) {
