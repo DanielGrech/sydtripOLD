@@ -1,0 +1,21 @@
+{
+	"format" : 1,
+	"files" : [
+		{
+			"name" : "bus.xz",
+			"type" : "BUS"
+		},
+		{
+			"name" : "rail.xz",
+			"type" : "RAIL"
+		},
+		{
+			"name" : "ferry.xz",
+			"type" : "FERRY"
+		},
+		{
+			"name" : "lightrail.xz",
+			"type" : "LIGHTRAIL"
+		}
+	]
+}
