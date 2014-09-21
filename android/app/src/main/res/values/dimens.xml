@@ -6,4 +6,8 @@
     <dimen name="text_size_secondary">14sp</dimen>
     <dimen name="section_margin">15dp</dimen>
 
+    <dimen name="fab_size">56dp</dimen>
+    <dimen name="fab_button_elevation">2dp</dimen>
+    <dimen name="fab_button_press_elevation">4dp</dimen>
+
 </resources>

@@ -13,6 +13,7 @@ public class Api {
     public static final int JELLYBEAN_MR1 = Build.VERSION_CODES.JELLY_BEAN_MR1;
     public static final int JELLYBEAN_MR2 = Build.VERSION_CODES.JELLY_BEAN_MR2;
     public static final int KITKAT = Build.VERSION_CODES.KITKAT;
+    public static final int L = Build.VERSION_CODES.KITKAT_WATCH;
 
 
 	public static boolean isMin(int level) {

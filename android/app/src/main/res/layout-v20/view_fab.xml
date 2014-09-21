@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+<ImageButton
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="@dimen/fab_size"
+    android:layout_height="@dimen/fab_size"
+    android:background="@drawable/ripple"
+    android:stateListAnimator="@anim/fab_anim"
+    android:src="@drawable/ic_action_add"
+    android:elevation="@dimen/fab_button_press_elevation"/>
