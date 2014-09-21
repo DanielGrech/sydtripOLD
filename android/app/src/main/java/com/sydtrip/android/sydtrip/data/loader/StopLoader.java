@@ -60,7 +60,6 @@ public class StopLoader extends AsyncLoader<List<Stop>> {
                 final List<Stop> stops = new ArrayList<>(cursor.getCount());
 
                 do {
-                    Timber.w("GOT: " + DatabaseUtils.dumpCurrentRowToString(cursor));
                     stops.add(DaoUtils.build(Stop.class, cursor));
                 } while (cursor.moveToNext());
 
