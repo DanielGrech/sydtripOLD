@@ -67,6 +67,7 @@ public class SyncService extends Service {
     private static class SyncAdapter extends AbstractThreadedSyncAdapter {
 
         private static final String KEY_LAST_SYNC_TIME = "_last_sync_time";
+        private static final String KEY_LAST_SYNC_TIME_FILE_TYPE = "_last_sync_time_for_";
 
         private static final int THREAD_POOL_SIZE = 4;
 
@@ -122,13 +123,16 @@ public class SyncService extends Service {
                             @Override
                             public void run() {
                                 try {
+                                    final long lastFileSyncTime  = prefs.get(
+                                            KEY_LAST_SYNC_TIME_FILE_TYPE + file.getType(), lastSyncTime);
+
                                     final File existingXzFile
                                             = new File(getContext().getFilesDir(), file.getName());
                                     if (existingXzFile.exists()) {
                                         existingXzFile.delete();
                                     }
 
-                                    final File xzFile = getManifestFile(file, lastSyncTime);
+                                    final File xzFile = getManifestFile(file, lastFileSyncTime);
                                     if (xzFile == null || !xzFile.exists()) {
                                         throw new IllegalStateException(
                                                 "No xz file found for: " + file);
@@ -149,6 +153,10 @@ public class SyncService extends Service {
                                     replaceFile(dbFile);
 
                                     Timber.d("Compression finished for: [%s]", file);
+                                    prefs.set(KEY_LAST_SYNC_TIME_FILE_TYPE + file.getType(),
+                                            getCurrentTimeInSeconds());
+                                } catch (NotModifiedException e) {
+                                    Timber.i("%s not been modified since last sync", file.getType());
                                 } catch (Throwable t) {
                                     Timber.e(t, "Error running sync");
                                 }
@@ -160,6 +168,8 @@ public class SyncService extends Service {
 
                     return true;
                 }
+            } catch (NotModifiedException ex) {
+                Timber.i("Manifest has not been modified");
             } catch (ExecutionException | InterruptedException e) {
                 Timber.e(e, "Error running sync");
             }
@@ -181,11 +191,20 @@ public class SyncService extends Service {
             final String ifModifiedSince = lastSyncTime < 0 ? null :
                     IFMODIFIEDSINCE_FORMAT.format(new Date(TimeUnit.SECONDS.toMillis(lastSyncTime)));
 
-            return Ion.with(getContext())
+            Response<Manifest> response = Ion.with(getContext())
                     .load(BuildConfig.SYNC_BASE_URL + BuildConfig.SYNC_FILE_MANIFEST)
                     .addHeader("If-Modified-Since", ifModifiedSince)
                     .as(Manifest.class)
+                    .withResponse()
                     .get();
+
+            if (response.getResult() != null) {
+                return response.getResult();
+            } else if (response.getHeaders().getResponseCode() == HttpStatus.SC_NOT_MODIFIED) {
+                throw new NotModifiedException();
+            } else {
+                return null;
+            }
         }
 
         private File getManifestFile(final ManifestFile file, long lastSyncTime)
@@ -198,9 +217,9 @@ public class SyncService extends Service {
                     .progress(new ProgressCallback() {
                         @Override
                         public void onProgress(long downloaded, long total) {
+                            // TODO: Broadcast progress..
                             Timber.d("Downloading [%s] (%s)",
                                     file.getType(), downloaded / (1f * total));
-                            // TODO: Broadcast progress..
                         }
                     })
                     .addHeader("If-Modified-Since", ifModifiedSince)
@@ -215,6 +234,9 @@ public class SyncService extends Service {
                                 if (file != null && file.exists()) {
                                     file.delete();
                                 }
+                            } else {
+                                Timber.d("Got result for file: [%s] - [%s]", file.getType(),
+                                        result.getHeaders().getStatusLine());
                             }
                         }
                     })
@@ -225,6 +247,8 @@ public class SyncService extends Service {
             } else if (response.getHeaders().getResponseCode() >= HttpStatus.SC_BAD_REQUEST) {
                 throw new RuntimeException("Error getting manifest file: " +
                         response.getHeaders().getStatusLine());
+            } else if (response.getHeaders().getResponseCode() == HttpStatus.SC_NOT_MODIFIED) {
+                throw new NotModifiedException(file.getType());
             } else {
                 return response.getResult();
             }
@@ -248,6 +272,17 @@ public class SyncService extends Service {
 
         private static long getCurrentTimeInSeconds() {
             return TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+        }
+    }
+
+    private static class NotModifiedException extends RuntimeException {
+
+        public NotModifiedException() {
+            super();
+        }
+
+        public NotModifiedException(ManifestFile.Type type) {
+            super("File not modified: " + type.name());
         }
     }
 
