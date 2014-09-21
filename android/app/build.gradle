@@ -54,6 +54,19 @@ android {
         buildConfigField "String", "GIT_SHA", "\"${gitSha()}\""
         buildConfigField "String", "BUILD_TIME", "\"${buildTime()}\""
         buildConfigField "String", "BUILDER", "\"${whoami()}\""
+        buildConfigField "String", "ACCOUNT_TYPE", "\"com.sydtrip\""
+        buildConfigField "String", "SYNC_CONTENT_PROVIDER_AUTHORITY", "\"com.sydtrip.android.sydtrip.sync_provider\""
+        buildConfigField "long", "SYNC_POLL_FREQUENCY", "${syncPollFrequencyInSeconds}"
+        buildConfigField "long", "SYNC_POLL_FLEX", "${syncPollFlexInSeconds}"
+        buildConfigField "long", "SYNC_MIN_PERIOD_BETWEEN", "${syncMinSecondsBetween}"
+        buildConfigField "String", "SYNC_BASE_URL", "\"${syncBaseUrl}\""
+        buildConfigField "String", "SYNC_FILE_MANIFEST", "\"${syncManifestPath}\""
+
+
+        resValue "string", "app_name", "SydTrip"
+        resValue "string", "account_type", "com.sydtrip"
+        resValue "string", "content_provider_authority", "com.sydtrip.android.sydtrip"
+        resValue "string", "sync_content_provider_authority", "com.sydtrip.android.sydtrip.sync_provider"
     }
 
     compileOptions {
@@ -69,26 +82,31 @@ android {
         debug {
             applicationIdSuffix '.debug'
             versionNameSuffix '-debug'
-        }
 
-        release {
-            applicationIdSuffix '.release'
-            versionNameSuffix '-release'
+            buildConfigField "String", "SYNC_CONTENT_PROVIDER_AUTHORITY", "\"com.sydtrip.android.sydtrip.debug.sync_provider\""
+            buildConfigField "String", "ACCOUNT_TYPE", "\"com.sydtrip.debug\""
+
+            resValue "string", "app_name", "SydTripDebug"
+            resValue "string", "account_type", "com.sydtrip.debug"
+            resValue "string", "content_provider_authority", "com.sydtrip.android.sydtrip.debug"
+            resValue "string", "sync_content_provider_authority", "com.sydtrip.android.sydtrip.debug.sync_provider"
         }
     }
 
 }
 
 dependencies {
-    compile 'com.android.support:support-v13:20.+'
-    compile 'com.google.android.gms:play-services:4.+'
-    compile 'com.jakewharton.timber:timber:2.0.+'
-    provided 'com.squareup.dagger:dagger-compiler:1.2.+'
-    compile 'com.squareup.dagger:dagger:1.2.+'
-    compile 'com.squareup:otto:1.3.+'
-    compile 'com.jakewharton:butterknife:5.0.+'
-    compile 'com.google.code.gson:gson:2.2.+'
+    compile 'com.android.support:support-v13:20.0.0'
+    compile 'com.google.android.gms:play-services:5.+'
+    compile 'com.jakewharton.timber:timber:2.4.1'
+    provided 'com.squareup.dagger:dagger-compiler:1.2.2'
+    compile 'com.squareup.dagger:dagger:1.2.2'
+    compile 'com.squareup:otto:1.3.5'
+    compile 'com.jakewharton:butterknife:5.1.2'
+    compile 'com.google.code.gson:gson:2.3'
     compile 'com.path:android-priority-jobqueue:1.1.+'
+    compile 'com.koushikdutta.ion:ion:1.3.8'
+    compile 'org.tukaani:xz:1.5'
     compile fileTree(dir: '../libs', include: '*.jar')
 
     androidTestCompile 'org.easytesting:fest-assert-core:2.0M10'

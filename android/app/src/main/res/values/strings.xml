@@ -1,5 +1,3 @@
 <resources>
-    <string name="app_name">SydTrip</string>
-    <string name="content_provider_authority">com.sydtrip.android.sydtrip</string>
     <string name="unknown_error">Unknown error</string>
 </resources>

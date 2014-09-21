@@ -3,6 +3,7 @@ package com.sydtrip.android.sydtrip.module;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.support.v4.content.LocalBroadcastManager;
+
 import com.sydtrip.android.sydtrip.Analytics;
 import com.sydtrip.android.sydtrip.IAnalytics;
 import com.sydtrip.android.sydtrip.BuildConfig;
@@ -14,14 +15,18 @@ import com.path.android.jobqueue.JobManager;
 import com.path.android.jobqueue.config.Configuration;
 import com.path.android.jobqueue.di.DependencyInjector;
 import com.path.android.jobqueue.log.CustomLogger;
+
 import dagger.Module;
 import dagger.Provides;
 import timber.log.Timber;
+
 import com.squareup.otto.Bus;
 import com.squareup.otto.ThreadEnforcer;
 import com.google.android.gms.analytics.GoogleAnalytics;
 
 import com.sydtrip.android.sydtrip.activity.MainActivity;
+import com.sydtrip.android.sydtrip.sync.SyncService;
+import com.sydtrip.android.sydtrip.util.PrefUtils;
 
 import javax.inject.Singleton;
 
@@ -32,10 +37,18 @@ import javax.inject.Singleton;
         complete = false,
         library = true,
         injects = {
-            MainActivity.class,
+                MainActivity.class,
+
+                SyncService.class
         }
 )
 public class AppServicesModule {
+
+    @Provides
+    @Singleton
+    public PrefUtils providesPrefUtils(@ForApplication Context context) {
+        return new PrefUtils(context);
+    }
 
     @Provides
     @Singleton
@@ -57,7 +70,7 @@ public class AppServicesModule {
 
     @Provides
     @Singleton
-    public ContentResolver providesContentResolver(@ForApplication Context context){
+    public ContentResolver providesContentResolver(@ForApplication Context context) {
         return context.getApplicationContext().getContentResolver();
     }
 

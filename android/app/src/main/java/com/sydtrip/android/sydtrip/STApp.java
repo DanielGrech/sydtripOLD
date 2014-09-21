@@ -1,19 +1,29 @@
 package com.sydtrip.android.sydtrip;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.Application;
+import android.content.ContentResolver;
+import android.content.SyncRequest;
 import android.os.Bundle;
 
+import com.google.android.gms.drive.DriveApi;
 import com.sydtrip.android.sydtrip.module.AppModule;
 import com.sydtrip.android.sydtrip.module.AppServicesModule;
 import com.sydtrip.android.sydtrip.module.ApiModule;
 import com.sydtrip.android.sydtrip.module.DaoModule;
+import com.sydtrip.android.sydtrip.sync.AuthenticatorService;
+import com.sydtrip.android.sydtrip.util.Api;
 import com.sydtrip.android.sydtrip.util.ReleaseLogger;
+
+import java.util.Random;
+
 import dagger.ObjectGraph;
 import timber.log.Timber;
 
 /**
- * 
+ *
  */
 public class STApp extends Application implements Application.ActivityLifecycleCallbacks {
 
@@ -39,6 +49,8 @@ public class STApp extends Application implements Application.ActivityLifecycleC
         mObjectGraph.injectStatics();
 
         registerActivityLifecycleCallbacks(this);
+
+        setupSync();
     }
 
     /**
@@ -65,6 +77,10 @@ public class STApp extends Application implements Application.ActivityLifecycleC
             og = mObjectGraph.plus(extraModules);
         }
         og.inject(obj);
+    }
+
+    public <T> T getInjection(Class<T> cls) {
+        return mObjectGraph.get(cls);
     }
 
     /**
@@ -108,5 +124,51 @@ public class STApp extends Application implements Application.ActivityLifecycleC
     @Override
     public void onActivityDestroyed(Activity activity) {
 
+    }
+
+    public void requestSync() {
+        final Account account = AuthenticatorService.ACCOUNT;
+        final String auth = BuildConfig.SYNC_CONTENT_PROVIDER_AUTHORITY;
+
+        if (Api.isMin(Api.KITKAT)) {
+            ContentResolver.requestSync(new SyncRequest.Builder()
+                    .setSyncAdapter(account, auth)
+                    .setExtras(new Bundle())
+                    .setManual(true)
+                    .setExpedited(true)
+                    .syncOnce()
+                    .build());
+        } else {
+            final Bundle settingsBundle = new Bundle();
+            settingsBundle.putBoolean(
+                    ContentResolver.SYNC_EXTRAS_MANUAL, true);
+            settingsBundle.putBoolean(
+                    ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
+            ContentResolver.requestSync(account, auth, settingsBundle);
+        }
+    }
+
+    private void setupSync() {
+        final Account account = AuthenticatorService.ACCOUNT;
+        final String auth = BuildConfig.SYNC_CONTENT_PROVIDER_AUTHORITY;
+        if (AccountManager.get(this).addAccountExplicitly(account, null, null)) {
+            ContentResolver.setSyncAutomatically(account, auth, true);
+
+            if (Api.isMin(Api.KITKAT)) {
+                ContentResolver.requestSync(new SyncRequest.Builder()
+                        .setSyncAdapter(account, auth)
+                        .syncPeriodic(BuildConfig.SYNC_POLL_FREQUENCY, BuildConfig.SYNC_POLL_FLEX)
+                        .setExtras(new Bundle())
+                        .build());
+            } else {
+                final int max = (int) (BuildConfig.SYNC_POLL_FREQUENCY + BuildConfig.SYNC_POLL_FLEX);
+                final int min = (int) (BuildConfig.SYNC_POLL_FREQUENCY - BuildConfig.SYNC_POLL_FLEX);
+
+                final long syncPeriod = new Random().nextInt((max - min) + 1) + min;
+                ContentResolver.addPeriodicSync(account, auth, new Bundle(), syncPeriod);
+            }
+        }
+
+        requestSync();
     }
 }
