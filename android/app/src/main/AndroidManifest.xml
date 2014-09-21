@@ -38,6 +38,8 @@
             android:exported="false"
             android:syncable="true"/>
 
+        <service android:name=".service.QueryService" />
+
         <service
             android:name=".sync.AuthenticatorService">
             <intent-filter>
