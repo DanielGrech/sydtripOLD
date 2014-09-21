@@ -20,6 +20,9 @@ import java.util.Map;
 
 import timber.log.Timber;
 
+import static com.sydtrip.android.sydtrip.data.TripContentProvider.Contract.Columns.*;
+import static com.sydtrip.android.sydtrip.data.TripContentProvider.Contract.TableNames.*;
+
 public class TripContentProvider extends ContentProvider {
 
     private static final String AUTHORITY = BuildConfig.TRIP_CONTENT_PROVIDER_AUTHORITY;
@@ -65,7 +68,8 @@ public class TripContentProvider extends ContentProvider {
             final int uriType = sURIMatcher.match(uri);
 
             final SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
-            qb.setTables(getTableFromType(uriType).getName());
+            final DbTable table = getTableFromType(uriType);
+            qb.setTables(createTablesQueryFromTable(table));
 
             final TripDb db = getDatabaseFromType(uriType);
 
@@ -79,6 +83,27 @@ public class TripContentProvider extends ContentProvider {
             return cursor;
         } catch (Exception e) {
             Timber.e(e, "Error querying database");
+        }
+
+        return null;
+    }
+
+    private String createTablesQueryFromTable(DbTable table) {
+        switch (table.getName()) {
+            case CALENDAR_INFO:
+            case CALENDAR_INFO_EX:
+            case STOP_TIMES:
+            case DYNAMIC_TEXT:
+                return table.getName();
+            case STOPS:
+                return String.format("%s JOIN %s ON (%s.%s = %s.%s)",
+                        STOPS, DYNAMIC_TEXT, STOPS, NAME, DYNAMIC_TEXT, ID);
+            case TRIPS:
+
+                break;
+            case ROUTES:
+
+                break;
         }
 
         return null;
@@ -181,48 +206,49 @@ public class TripContentProvider extends ContentProvider {
     public static class Contract {
 
         public static class TableNames {
-            public static String DYNAMIC_TEXT = "dynamic_text";
-            public static String STOPS = "stops";
-            public static String ROUTES = "routes";
-            public static String TRIPS = "trips";
-            public static String STOP_TIMES = "stop_times";
-            public static String CALENDAR_INFO = "calendar_info";
-            public static String CALENDAR_INFO_EX = "calendar_info_ex";
+            public static final String DYNAMIC_TEXT = "dynamic_text";
+            public static final String STOPS = "stops";
+            public static final String ROUTES = "routes";
+            public static final String TRIPS = "trips";
+            public static final String STOP_TIMES = "stop_times";
+            public static final String CALENDAR_INFO = "calendar_info";
+            public static final String CALENDAR_INFO_EX = "calendar_info_ex";
         }
 
         public static DbTable[] TABLES = {
-                DbTable.with(TableNames.DYNAMIC_TEXT)
+                DbTable.with(DYNAMIC_TEXT)
                         .columns(Columns.ID,
                                 Columns.VALUE)
                         .create(),
-                DbTable.with(TableNames.CALENDAR_INFO)
+                DbTable.with(CALENDAR_INFO)
                         .columns(Columns.TRIP_ID,
                                 Columns.START_DAY,
                                 Columns.END_DAY,
                                 Columns.AVAILABILITY)
                         .create(),
-                DbTable.with(TableNames.CALENDAR_INFO_EX)
+                DbTable.with(CALENDAR_INFO_EX)
                         .columns(Columns.TRIP_ID,
                                 Columns.JULIAN_DAY,
                                 Columns.EXCEPTION_TYPE)
                         .create(),
-                DbTable.with(TableNames.STOPS)
+                DbTable.with(STOPS)
                         .columns(Columns.ID,
                                 Columns.CODE,
                                 Columns.NAME,
                                 Columns.LAT,
                                 Columns.LNG,
                                 Columns.TYPE,
+                                Columns.PARENT_ID,
                                 Columns.PLATFORM_CODE)
                         .create(),
-                DbTable.with(TableNames.ROUTES)
+                DbTable.with(ROUTES)
                         .columns(Columns.ID,
                                 Columns.AGENCY_ID,
                                 Columns.SHORT_NAME,
                                 Columns.LONG_NAME,
                                 Columns.COLOR)
                         .create(),
-                DbTable.with(TableNames.TRIPS)
+                DbTable.with(TRIPS)
                         .columns(Columns.ID,
                                 Columns.HEAD_SIGN,
                                 Columns.DIRECTION,
@@ -230,7 +256,7 @@ public class TripContentProvider extends ContentProvider {
                                 Columns.WHEELCHAIR_ACCESS,
                                 Columns.ROUTE_ID)
                         .create(),
-                DbTable.with(TableNames.STOP_TIMES)
+                DbTable.with(STOP_TIMES)
                         .columns(Columns.TRIP_ID,
                                 Columns.STOP_ID,
                                 Columns.SECONDS_SINCE_MIDNIGHT)
@@ -253,6 +279,7 @@ public class TripContentProvider extends ContentProvider {
             public static final DbField LNG = new DbField("lng", "REAL");
             public static final DbField TYPE = new DbField("type", "INTEGER");
             public static final DbField PLATFORM_CODE = new DbField("platformCode", "TEXT");
+            public static final DbField PARENT_ID = new DbField("parentId", "INTEGER");
             public static final DbField HEAD_SIGN = new DbField("headSign", "TEXT");
             public static final DbField DIRECTION = new DbField("direction", "INTEGER");
             public static final DbField BLOCK_ID = new DbField("blockId", "TEXT");

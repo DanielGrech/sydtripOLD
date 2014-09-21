@@ -24,13 +24,6 @@ public class MainActivity extends BaseQueryActivity {
     protected void onResume() {
         super.onResume();
         mEventBus.register(this);
-
-        new Handler().postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                query(Query.create().build());
-            }
-        }, 1000);
     }
 
     @Override
@@ -41,6 +34,6 @@ public class MainActivity extends BaseQueryActivity {
 
     @Override
     public void onQueryResult(QueryResult result) {
-        Toast.makeText(this, "Got result: " + result, Toast.LENGTH_SHORT).show();
+//        Toast.makeText(this, "Got result: " + result, Toast.LENGTH_SHORT).show();
     }
 }

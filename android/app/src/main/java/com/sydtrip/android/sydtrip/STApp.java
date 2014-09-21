@@ -9,6 +9,7 @@ import android.content.SyncRequest;
 import android.os.Bundle;
 
 import com.google.android.gms.drive.DriveApi;
+import com.koushikdutta.ion.Ion;
 import com.sydtrip.android.sydtrip.module.AppModule;
 import com.sydtrip.android.sydtrip.module.AppServicesModule;
 import com.sydtrip.android.sydtrip.module.ApiModule;
@@ -49,6 +50,8 @@ public class STApp extends Application implements Application.ActivityLifecycleC
         mObjectGraph.injectStatics();
 
         registerActivityLifecycleCallbacks(this);
+
+        Ion.getDefault(this).getConscryptMiddleware().enable(false);
 
         setupSync();
     }

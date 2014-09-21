@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Fab">
+        <item name="android:layout_width">@dimen/fab_size</item>
+        <item name="android:layout_height">@dimen/fab_size</item>
+        <item name="android:background">@drawable/ripple</item>
+        <item name="android:stateListAnimator">@anim/fab_anim</item>
+        <item name="android:elevation">@dimen/fab_button_press_elevation</item>
+    </style>
+
+</resources>

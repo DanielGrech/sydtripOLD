@@ -223,7 +223,8 @@ public class SyncService extends Service {
             if (response.getException() != null) {
                 throw new RuntimeException(response.getException());
             } else if (response.getHeaders().getResponseCode() >= HttpStatus.SC_BAD_REQUEST) {
-                throw new RuntimeException("Error getting manifest file: " + response.getHeaders());
+                throw new RuntimeException("Error getting manifest file: " +
+                        response.getHeaders().getStatusLine());
             } else {
                 return response.getResult();
             }

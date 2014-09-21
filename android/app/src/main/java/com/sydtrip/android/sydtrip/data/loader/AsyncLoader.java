@@ -1,4 +1,4 @@
-package com.sydtrip.android.sydtrip.data;
+package com.sydtrip.android.sydtrip.data.loader;
 
 import android.content.AsyncTaskLoader;
 import android.content.Context;

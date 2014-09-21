@@ -33,4 +33,13 @@
         <item name="android:gravity">center_vertical</item>
     </style>
 
+    <style name="FabInclude">
+        <item name="android:layout_width">@dimen/fab_size</item>
+        <item name="android:layout_height">@dimen/fab_size</item>
+        <item name="android:layout_alignParentRight">true</item>
+        <item name="android:layout_alignParentBottom">true</item>
+        <item name="android:layout_marginRight">@dimen/padding_default</item>
+        <item name="android:layout_marginBottom">@dimen/padding_default</item>
+    </style>
+
 </resources>

@@ -4,7 +4,6 @@
 
     </style>
 
-
     <style name="AppThemeBase" parent="_AppThemeBase">
         <item name="android:windowBackground">@color/window_background</item>
     </style>

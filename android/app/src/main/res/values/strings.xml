@@ -3,4 +3,5 @@
     <string name="section_nearby_title">Nearby</string>
     <string name="section_favourite_title">Favourite</string>
     <string name="section_recent_title">Recent</string>
+    <string name="new_trip">New Trip</string>
 </resources>

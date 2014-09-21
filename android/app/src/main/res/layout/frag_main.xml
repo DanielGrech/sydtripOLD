@@ -28,12 +28,7 @@
 
     <include
         android:id="@+id/fab"
-        android:layout_width="@dimen/fab_size"
-        android:layout_height="@dimen/fab_size"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentBottom="true"
-        android:layout_marginRight="@dimen/padding_default"
-        android:layout_marginBottom="@dimen/padding_default"
-        layout="@layout/view_fab" />
+        style="@style/FabInclude"
+        layout="@layout/view_fab"/>
 
 </RelativeLayout>

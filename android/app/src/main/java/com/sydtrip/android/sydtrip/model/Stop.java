@@ -18,6 +18,8 @@ public class Stop extends BaseModel {
 
     private String mPlatformCode;
 
+    private int mParentId;
+
     public int getId() {
         return mId;
     }
@@ -74,6 +76,14 @@ public class Stop extends BaseModel {
         mPlatformCode = platformCode;
     }
 
+    public int getParentId() {
+        return mParentId;
+    }
+
+    public void setParentId(int parentId) {
+        this.mParentId = parentId;
+    }
+
     @Override
     public void writeToParcel(Parcel parcel, int i) {
         parcel.writeInt(mId);
@@ -83,6 +93,7 @@ public class Stop extends BaseModel {
         parcel.writeFloat(mLng);
         parcel.writeInt(mType);
         parcel.writeString(mPlatformCode);
+        parcel.writeInt(mParentId);
     }
 
     public static final Creator<Stop> CREATOR = new Creator<Stop>() {
@@ -96,6 +107,7 @@ public class Stop extends BaseModel {
             stop.mLng = parcel.readFloat();
             stop.mType = parcel.readInt();
             stop.mPlatformCode = parcel.readString();
+            stop.mParentId = parcel.readInt();
 
             return stop;
         }
