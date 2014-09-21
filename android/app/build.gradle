@@ -55,6 +55,7 @@ android {
         buildConfigField "String", "BUILD_TIME", "\"${buildTime()}\""
         buildConfigField "String", "BUILDER", "\"${whoami()}\""
         buildConfigField "String", "ACCOUNT_TYPE", "\"com.sydtrip\""
+        buildConfigField "String", "TRIP_CONTENT_PROVIDER_AUTHORITY", "\"com.sydtrip.android.sydtrip_trips\""
         buildConfigField "String", "SYNC_CONTENT_PROVIDER_AUTHORITY", "\"com.sydtrip.android.sydtrip.sync_provider\""
         buildConfigField "long", "SYNC_POLL_FREQUENCY", "${syncPollFrequencyInSeconds}"
         buildConfigField "long", "SYNC_POLL_FLEX", "${syncPollFlexInSeconds}"
@@ -66,6 +67,7 @@ android {
         resValue "string", "app_name", "SydTrip"
         resValue "string", "account_type", "com.sydtrip"
         resValue "string", "content_provider_authority", "com.sydtrip.android.sydtrip"
+        resValue "string", "trip_content_provider_authority", "com.sydtrip.android.sydtrip_trips"
         resValue "string", "sync_content_provider_authority", "com.sydtrip.android.sydtrip.sync_provider"
     }
 
@@ -84,11 +86,13 @@ android {
             versionNameSuffix '-debug'
 
             buildConfigField "String", "SYNC_CONTENT_PROVIDER_AUTHORITY", "\"com.sydtrip.android.sydtrip.debug.sync_provider\""
+            buildConfigField "String", "TRIP_CONTENT_PROVIDER_AUTHORITY", "\"com.sydtrip.android.sydtrip.debug._trips\""
             buildConfigField "String", "ACCOUNT_TYPE", "\"com.sydtrip.debug\""
 
             resValue "string", "app_name", "SydTripDebug"
             resValue "string", "account_type", "com.sydtrip.debug"
             resValue "string", "content_provider_authority", "com.sydtrip.android.sydtrip.debug"
+            resValue "string", "trip_content_provider_authority", "com.sydtrip.android.sydtrip.debug._trips"
             resValue "string", "sync_content_provider_authority", "com.sydtrip.android.sydtrip.debug.sync_provider"
         }
     }

@@ -12,6 +12,7 @@ import android.os.IBinder;
 
 import com.koushikdutta.async.future.FutureCallback;
 import com.koushikdutta.ion.Ion;
+import com.koushikdutta.ion.ProgressCallback;
 import com.koushikdutta.ion.Response;
 import com.sydtrip.android.sydtrip.BuildConfig;
 import com.sydtrip.android.sydtrip.STApp;
@@ -135,10 +136,11 @@ public class SyncService extends Service {
 
                                     Timber.d("Got manifest file: [%s] [%s]", file, xzFile);
 
-                                    final String dbFileName
-                                            = xzFile.getAbsolutePath().replace(".xz", ".db.BAK");
+                                    final File dbBackupFile = new File(xzFile.getParentFile(),
+                                            file.getDatabaseFileSyncName());
 
-                                    final File dbFile = CompressionUtils.decompress(xzFile, dbFileName);
+                                    final File dbFile = CompressionUtils.decompress(xzFile,
+                                            dbBackupFile.getAbsolutePath());
                                     if (dbFile == null || !dbFile.exists()) {
                                         throw new IllegalStateException(
                                                 "No db file found for " + file);
@@ -146,7 +148,7 @@ public class SyncService extends Service {
 
                                     replaceFile(dbFile);
 
-                                    Timber.d("Compression finished for: [%s]",file);
+                                    Timber.d("Compression finished for: [%s]", file);
                                 } catch (Throwable t) {
                                     Timber.e(t, "Error running sync");
                                 }
@@ -166,7 +168,8 @@ public class SyncService extends Service {
         }
 
         private void replaceFile(File file) {
-            final File existingFile = new File(file.getAbsolutePath().replace(".BAK", ""));
+            final File existingFile = new File(file.getAbsolutePath()
+                    .replace(ManifestFile.DATABASE_FILE_IN_SYNC_SUFFIX, ""));
             if (existingFile.exists()) {
                 existingFile.delete();
             }
@@ -185,13 +188,21 @@ public class SyncService extends Service {
                     .get();
         }
 
-        private File getManifestFile(ManifestFile file, long lastSyncTime)
+        private File getManifestFile(final ManifestFile file, long lastSyncTime)
                 throws ExecutionException, InterruptedException {
             final String ifModifiedSince = lastSyncTime < 0 ? null :
                     IFMODIFIEDSINCE_FORMAT.format(new Date(TimeUnit.SECONDS.toMillis(lastSyncTime)));
 
             final Response<File> response = Ion.with(getContext())
                     .load(BuildConfig.SYNC_BASE_URL + file.getName())
+                    .progress(new ProgressCallback() {
+                        @Override
+                        public void onProgress(long downloaded, long total) {
+                            Timber.d("Downloading [%s] (%s)",
+                                    file.getType(), downloaded / (1f * total));
+                            // TODO: Broadcast progress..
+                        }
+                    })
                     .addHeader("If-Modified-Since", ifModifiedSince)
                     .write(new File(getContext().getFilesDir(), file.getName()))
                     .withResponse()
@@ -224,7 +235,7 @@ public class SyncService extends Service {
                 File[] files = filesDir.listFiles(new FileFilter() {
                     @Override
                     public boolean accept(File file) {
-                        return file.getName().endsWith(".db");
+                        return file.getName().endsWith(ManifestFile.DATABASE_FILE_SUFFIX);
                     }
                 });
 

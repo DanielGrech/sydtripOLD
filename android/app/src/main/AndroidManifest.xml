@@ -25,8 +25,12 @@
         </activity>
 
         <provider
-                android:authorities="@string/content_provider_authority"
-                android:name=".data.STContentProvider" />
+            android:authorities="@string/content_provider_authority"
+            android:name=".data.STContentProvider" />
+
+        <provider
+            android:authorities="@string/trip_content_provider_authority"
+            android:name=".data.TripContentProvider" />
 
         <provider
             android:name=".sync.SyncContentProvider"
