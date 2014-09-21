@@ -2,7 +2,7 @@ package com.sydtrip.android.sydtrip.fragment;
 
 import android.os.Bundle;
 
-import com.sydtrip.android.sydtrip.model.Query;
+import com.sydtrip.android.sydtrip.query.Query;
 import com.sydtrip.android.sydtrip.service.QueryServiceConnection;
 
 public abstract class BaseQueryFragment extends BaseFragment

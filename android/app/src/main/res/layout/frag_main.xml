@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/Section.Container.Animated">
+
+    <TextView
+        android:id="@+id/header_nearby"
+        android:text="@string/section_nearby_title"
+        style="@style/SectionHeaderView"/>
+
+    <TextView
+        android:id="@+id/header_favourite"
+        android:text="@string/section_favourite_title"
+        android:layout_marginTop="@dimen/section_margin"
+        style="@style/SectionHeaderView"/>
+
+    <TextView
+        android:id="@+id/header_recent"
+        android:text="@string/section_recent_title"
+        android:layout_marginTop="@dimen/section_margin"
+        style="@style/SectionHeaderView"/>
+
+</LinearLayout>

@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="default_padding">16dp</dimen>
-    <dimen name="app_drawer_width">260dp</dimen>
-    <dimen name="app_drawer_major_text_size">18sp</dimen>
-    <dimen name="app_drawer_minor_text_size">14sp</dimen>
-    <dimen name="app_menu_list_item_color_display_width">2dp</dimen>
+    <dimen name="padding_default">16dp</dimen>
+    <dimen name="padding_small">5dp</dimen>
+    <dimen name="text_size_primary">18sp</dimen>
+    <dimen name="text_size_secondary">14sp</dimen>
+    <dimen name="section_margin">15dp</dimen>
+
 </resources>

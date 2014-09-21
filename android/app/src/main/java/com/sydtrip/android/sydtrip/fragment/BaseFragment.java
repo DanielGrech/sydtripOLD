@@ -12,6 +12,8 @@ import com.squareup.otto.Bus;
 
 import javax.inject.Inject;
 
+import butterknife.ButterKnife;
+
 /**
  * Base class for all fragments in the app
  */
@@ -39,6 +41,12 @@ public abstract class BaseFragment extends Fragment {
 
         final STApp app = (STApp) getActivity().getApplication();
         app.inject(this);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        ButterKnife.reset(this);
     }
 
     /**

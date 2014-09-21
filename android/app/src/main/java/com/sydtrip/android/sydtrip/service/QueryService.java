@@ -8,8 +8,10 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 
-import com.sydtrip.android.sydtrip.model.Query;
-import com.sydtrip.android.sydtrip.model.QueryResult;
+import com.sydtrip.android.sydtrip.data.RoutingEngine;
+import com.sydtrip.android.sydtrip.query.IQueryEngine;
+import com.sydtrip.android.sydtrip.query.Query;
+import com.sydtrip.android.sydtrip.query.QueryEngine;
 import com.sydtrip.android.sydtrip.util.EnumUtils;
 
 import java.lang.ref.WeakReference;
@@ -26,10 +28,18 @@ public class QueryService extends Service {
 
     private final List<Messenger> mClients;
 
+    private IQueryEngine mQueryEngine;
+
     public QueryService() {
         mHandler = new IncomingCommandHandler(this);
         mMessenger = new Messenger(mHandler);
         mClients = new LinkedList<>();
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        mQueryEngine = new QueryEngine(new RoutingEngine(getApplicationContext()));
     }
 
     @Override
@@ -52,14 +62,8 @@ public class QueryService extends Service {
     private void onQuery(Query query) {
         Timber.d("Running query %s", query);
 
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
         final Message msg = Command.QUERY_RESULT.message();
-        msg.obj = new QueryResult();
+        msg.obj = mQueryEngine.execute(query);
         send(msg);
     }
 
@@ -67,7 +71,7 @@ public class QueryService extends Service {
         final Iterator<Messenger> clientIter = mClients.iterator();
         while (clientIter.hasNext()) {
             final Messenger client = clientIter.next();
-            if (!send(client, msg)) {
+            if (!send(client, Message.obtain(msg))) {
                 clientIter.remove();
             }
         }

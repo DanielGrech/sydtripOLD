@@ -10,8 +10,8 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 
-import com.sydtrip.android.sydtrip.model.Query;
-import com.sydtrip.android.sydtrip.model.QueryResult;
+import com.sydtrip.android.sydtrip.query.Query;
+import com.sydtrip.android.sydtrip.query.QueryResult;
 import com.sydtrip.android.sydtrip.util.EnumUtils;
 
 import java.lang.ref.WeakReference;

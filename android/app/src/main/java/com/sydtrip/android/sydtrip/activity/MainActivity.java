@@ -2,12 +2,11 @@ package com.sydtrip.android.sydtrip.activity;
 
 import android.os.Bundle;
 import android.os.Handler;
-import android.view.View;
 import android.widget.Toast;
 
 import com.sydtrip.android.sydtrip.R;
-import com.sydtrip.android.sydtrip.model.Query;
-import com.sydtrip.android.sydtrip.model.QueryResult;
+import com.sydtrip.android.sydtrip.query.Query;
+import com.sydtrip.android.sydtrip.query.QueryResult;
 
 import butterknife.ButterKnife;
 
@@ -29,7 +28,7 @@ public class MainActivity extends BaseQueryActivity {
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                query(new Query());
+                query(Query.create().build());
             }
         }, 1000);
     }

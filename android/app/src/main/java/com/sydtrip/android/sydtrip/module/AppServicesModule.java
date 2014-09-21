@@ -8,6 +8,7 @@ import com.sydtrip.android.sydtrip.Analytics;
 import com.sydtrip.android.sydtrip.IAnalytics;
 import com.sydtrip.android.sydtrip.BuildConfig;
 import com.sydtrip.android.sydtrip.STApp;
+import com.sydtrip.android.sydtrip.fragment.MainFragment;
 import com.sydtrip.android.sydtrip.module.annotation.ForApplication;
 import com.path.android.jobqueue.BaseJob;
 import com.path.android.jobqueue.Job;
@@ -38,6 +39,8 @@ import javax.inject.Singleton;
         library = true,
         injects = {
                 MainActivity.class,
+
+                MainFragment.class,
 
                 SyncService.class
         }

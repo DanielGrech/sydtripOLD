@@ -1,3 +1,36 @@
 <resources>
 
+    <style name="Section">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+    </style>
+
+    <style name="Section.Container">
+        <item name="android:orientation">vertical</item>
+    </style>
+
+    <style name="Section.Container.Animated">
+        <item name="android:animateLayoutChanges">true</item>
+    </style>
+
+    <style name="Section.Container.Padded">
+        <item name="android:background">@android:color/white</item>
+        <item name="android:padding">@dimen/padding_default</item>
+    </style>
+
+    <style name="Section.Container.Animated.Padded">
+        <item name="android:background">@android:color/white</item>
+        <item name="android:padding">@dimen/padding_default</item>
+    </style>
+
+    <style name="SectionHeaderView" parent="Section.Container.Padded">
+        <item name="android:textSize">@dimen/text_size_primary</item>
+        <item name="android:textColor">@color/text_dark</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:drawablePadding">@dimen/padding_small</item>
+        <item name="android:gravity">center_vertical</item>
+    </style>
+
 </resources>

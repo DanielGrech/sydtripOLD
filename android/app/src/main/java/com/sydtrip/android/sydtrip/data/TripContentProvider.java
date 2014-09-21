@@ -24,11 +24,13 @@ public class TripContentProvider extends ContentProvider {
 
     private static final String AUTHORITY = BuildConfig.TRIP_CONTENT_PROVIDER_AUTHORITY;
 
-    private ContentResolver mContentResolver;
-
     private static final UriMatcher sURIMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 
     private static Map<ManifestFile.Type, TripDb> manifestFileToTripDb = new HashMap<>();
+
+    private ContentResolver mContentResolver;
+
+    private DataManager mDataManager;
 
     static {
         for (int i = 0, len = ManifestFile.Type.values().length; i < len; i++) {
@@ -53,6 +55,7 @@ public class TripContentProvider extends ContentProvider {
     @Override
     public boolean onCreate() {
         mContentResolver = getContext().getContentResolver();
+        mDataManager = new DataManager(getContext());
         return true;
     }
 
@@ -110,6 +113,9 @@ public class TripContentProvider extends ContentProvider {
         final ManifestFile.Type manifestFileType
                 = ManifestFile.Type.values()[type / Contract.TABLES.length];
 
+        if (!mDataManager.hasData(manifestFileType)) {
+            throw new RuntimeException("No database for: " + manifestFileType);
+        }
         TripDb db = manifestFileToTripDb.get(manifestFileType);
         if (db == null) {
             db = new TripDb(getContext(), manifestFileType);
@@ -180,12 +186,25 @@ public class TripContentProvider extends ContentProvider {
             public static String ROUTES = "routes";
             public static String TRIPS = "trips";
             public static String STOP_TIMES = "stop_times";
+            public static String CALENDAR_INFO = "calendar_info";
+            public static String CALENDAR_INFO_EX = "calendar_info_ex";
         }
 
         public static DbTable[] TABLES = {
                 DbTable.with(TableNames.DYNAMIC_TEXT)
                         .columns(Columns.ID,
                                 Columns.VALUE)
+                        .create(),
+                DbTable.with(TableNames.CALENDAR_INFO)
+                        .columns(Columns.TRIP_ID,
+                                Columns.START_DAY,
+                                Columns.END_DAY,
+                                Columns.AVAILABILITY)
+                        .create(),
+                DbTable.with(TableNames.CALENDAR_INFO_EX)
+                        .columns(Columns.TRIP_ID,
+                                Columns.JULIAN_DAY,
+                                Columns.EXCEPTION_TYPE)
                         .create(),
                 DbTable.with(TableNames.STOPS)
                         .columns(Columns.ID,
@@ -239,6 +258,11 @@ public class TripContentProvider extends ContentProvider {
             public static final DbField BLOCK_ID = new DbField("blockId", "TEXT");
             public static final DbField WHEELCHAIR_ACCESS = new DbField("wheelchairAccess", "INTEGER");
             public static final DbField ROUTE_ID = new DbField("routeId", "INTEGER");
+            public static final DbField START_DAY = new DbField("startDay", "INTEGER");
+            public static final DbField END_DAY = new DbField("endDay", "INTEGER");
+            public static final DbField AVAILABILITY = new DbField("availability", "INTEGER");
+            public static final DbField JULIAN_DAY = new DbField("julianDay", "INTEGER");
+            public static final DbField EXCEPTION_TYPE = new DbField("exceptionType", "INTEGER");
         }
     }
 }
